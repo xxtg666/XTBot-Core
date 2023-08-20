@@ -12,4 +12,4 @@
 
 > [!WARNING]
 > 作者保留此仓库内容的所有权。
-> 请查阅许可详情：[LICENCE](https://github.com/xxtg666/XTBot-Core/blob/main/LICENSE)。
+> 请查阅许可详情：[LICENSE](https://github.com/xxtg666/XTBot-Core/blob/main/LICENSE)。
