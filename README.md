@@ -9,3 +9,7 @@
 
 > [!NOTE]
 > 源代码库不会实时更新，我们计划在 XTBot 发布重大更新时**手动**进行一次同步。
+
+> [!WARNING]
+> 作者保留此仓库内容的所有权。
+> 请查阅许可详情：[LICENCE](https://github.com/xxtg666/XTBot-Core/blob/main/LICENSE)。
