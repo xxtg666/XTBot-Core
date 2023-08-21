@@ -13,6 +13,8 @@ answer = f"""命令列表 —— XTBot
 [√]    ChatGPT              (cg)
 
 * 为部分群可用
+
+开源地址: https://github.com/xxtg666/XTBot-Core
 """
 
 help_ = nonebot.on_command("help",aliases={"menu"})
