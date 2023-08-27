@@ -13,7 +13,7 @@ class GITHUB_UTILS:
         prompt_short = prompt[0:20]
         prompt_no_endl = prompt.replace("\n",r"\n")
         t = int(time.time())
-        issue_title = f"{user_id}: {prompt_short}{'' if prompt_short == prompt else '...'}"
+        issue_title = f"[ChatGPTv2] {user_id}: {prompt_short}{'' if prompt_short == prompt else '...'}"
         issue_body = f"{t}\n{user_id}\n{model}\n{prompt_no_endl}\n{chat_history}"
         return self.repo.create_issue(title=issue_title, body=issue_body).number
     def endTask(self, issue_number: int, answer: str, tokens: list[int]) -> int:

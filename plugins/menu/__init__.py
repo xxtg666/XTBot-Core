@@ -11,6 +11,7 @@ answer = f"""命令列表 —— XTBot
 [√]    wolfram计算器         (calc)
 [√]    拉格朗日插值计算      (li)
 [√]    ChatGPT              (cg)
+[√]    AI绘图(DALL-E)        (de)
 
 * 为部分群可用
 
