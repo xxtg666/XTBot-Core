@@ -554,3 +554,32 @@ async def _(matcher: Matcher,
     if event.reply:
         if event.reply.message_id in review_ids:
             review_ids[event.reply.message_id] = event.get_plaintext().strip()
+
+
+wit_prompt = '''Next I'll give you a chat message that a person replied to and asked "what is that".
+
+1. Please tell me what he asked about. Mostly it's noun.
+
+2. You only need to output the keywords on one line, if there are more than one keyword, use "|" to separate.
+
+3. For example your output format:
+Keyword
+or
+Keyword1|Keyword2
+etc.'''
+wit = nonebot.on_keyword(keywords={"这是啥","这啥"})
+@wit.handle()
+async def _(matcher: Matcher,
+        bot: Bot,
+        event: GroupMessageEvent):
+    if not event.reply:
+        await wit.finish()
+    msg = event.reply.message.extract_plain_text().strip()
+    if msg == "":
+        await wit.finish()
+    r = await gpt.getChatGPT([{"role":"system","content":wit_prompt}],msg,{"banned":False})
+    keywords = r[2][-1]["content"]
+    keywords = keywords.split("|")
+    for i in range(len(keywords)):
+        keywords[i] = keywords[i].strip()
+    await wit.finish("猜你想搜: \n"+"\n".join(keywords))
