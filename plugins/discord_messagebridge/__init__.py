@@ -25,7 +25,7 @@ QQ_ID_GH = 0 # 非公开内容
 already_start_discord_bot = False
 intents = discord.Intents.default()
 intents.message_content = True
-client = discord.Client(intents=intents,proxy=os.environ["HTTP_PROXY"])
+dcclient = discord.Client(intents=intents,proxy=os.environ["HTTP_PROXY"])
 qq_bind_file = "data/discord_message_bridge_qq_bind.json"
 qq_bind_file_2 = "data/discord_message_bridge_qq_bind_2.json"
 if not os.path.exists(qq_bind_file):
@@ -112,29 +112,11 @@ def avatar(uid):
     return avatars.get(str(uid),"")
 def process_text(text: str):
     return text.replace("&amp;#93;","]").replace("&amp;#91;","[")
-@client.event
-async def on_message(message):
-    if message.author.id == client.user.id:
-        return
-    ms = f'[Discord] <{message.author.name}> {message.content}'
-    if message.channel.id == CHANNEL_ID:
-        if str(message.content).strip().startswith("~"):
-            r = process_xdbot_command(message.author.id,str(message.content).strip())
-            await send_list_message(r,CHANNEL_ID,QQ_ID)
-            return
-        await gbot.send_group_msg(group_id=QQ_ID, message=replace_ids_with_cq_at(ms))
-    elif message.channel.id == CHANNEL_ID_GH:
-        if str(message.content).strip().startswith("~"):
-            r = process_xdbot_command(message.author.id,str(message.content).strip())
-            await send_list_message(r,CHANNEL_ID_GH,QQ_ID_GH)
-            return
-        await gbot.send_group_msg(group_id=QQ_ID_GH, message=replace_ids_with_cq_at(ms))
-    elif message.channel.id == 0: # 非公开内容
-        await gbot.send_group_msg(group_id= 0, message=ms) # 非公开内容
 
 bot_restart_time = 0
 def startDiscordBot():
     global bot_restart_time
+    global dcclient
     time_1 = time.time()
     if bot_restart_time > 3:
         asyncio.run(gbot.send_group_msg(group_id=QQ_ID, message=f"[Discord] 转发 Bot 短时间启动失败次数过多,已停止"))
@@ -142,8 +124,29 @@ def startDiscordBot():
     if bot_restart_time != 0:
         asyncio.run(gbot.send_group_msg(group_id=QQ_ID, message=f"[Discord] 转发 Bot 正在重启 ({bot_restart_time}次)"))
     try:
-        client.run(TOKEN)
+        dcclient = discord.Client(intents=intents,proxy=os.environ["HTTP_PROXY"])
+        @dcclient.event
+        async def on_message(message):
+            if message.author.id == dcclient.user.id:
+                return
+            ms = f'[Discord] <{message.author.name}> {message.content}'
+            if message.channel.id == CHANNEL_ID:
+                if str(message.content).strip().startswith("~"):
+                    r = process_xdbot_command(message.author.id,str(message.content).strip())
+                    await send_list_message(r,CHANNEL_ID,QQ_ID)
+                    return
+                await gbot.send_group_msg(group_id=QQ_ID, message=replace_ids_with_cq_at(ms))
+            elif message.channel.id == CHANNEL_ID_GH:
+                if str(message.content).strip().startswith("~"):
+                    r = process_xdbot_command(message.author.id,str(message.content).strip())
+                    await send_list_message(r,CHANNEL_ID_GH,QQ_ID_GH)
+                    return
+                await gbot.send_group_msg(group_id=QQ_ID_GH, message=replace_ids_with_cq_at(ms))
+            elif message.channel.id == 1133053561408860191: # DEV
+                await gbot.send_group_msg(group_id=1007654102, message=ms)
+        dcclient.run(TOKEN)
     except:
+        del dcclient
         time_2 = time.time()
         asyncio.run(gbot.send_group_msg(group_id=QQ_ID, message=f"[Discord] 转发 Bot 异常断开连接 (已运行{int(time_2-time_1)}秒)\n" +
                                                                 traceback.format_exc().split("\n")[-2]))
@@ -234,7 +237,7 @@ async def _(matcher: Matcher,
         bot: Bot,
         event: GroupMessageEvent,
         args: Message = CommandArg()):
-    global temp_bind_qq, temp_bind_dis, bot_restart_time
+    global temp_bind_qq, temp_bind_dis, bot_restart_time, dcclient
     try:
         if event.group_id == QQ_ID:
             channel = CHANNEL_ID
@@ -261,12 +264,12 @@ async def _(matcher: Matcher,
         else:
             await matcher.finish("绑定 token 无效", at_sender=True)
     elif args[0] == "restart":
-        if bot_restart_time > 3:
+        if bot_restart_time >= 3:
             bot_restart_time = 0
             threading.Thread(target=startDiscordBot).start()
             await matcher.finish("正在尝试重启转发 Bot",at_sender=True)
         else:
-            await matcher.finish("手动重启仅在自动重启失败后可用",at_sender=True)
+            await matcher.finish("转发 Bot 正常运行中",at_sender=True)
     await matcher.finish("IT Craft Development Team Discord Message Bridge 命令帮助"
                          "\n.dmb bind <token> - 绑定 Discord 账户"
                          "\n.dmb restart - 手动重启转发 Bot (仅在自动重启失败后可用)",at_sender=True)

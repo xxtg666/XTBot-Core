@@ -112,23 +112,26 @@ class USER_DATA_UTILS:
         return self.setUserSign(user_id, origin_user_sign)
 class WEB_API_UTILS:
     async def getImageBase64(self, html: str) -> str:
-        async with httpx.AsyncClient() as client:
-            url = "http://127.0.0.1:6789/html/img" # 非公开内容
-            response = await client.post(url, data = {"html":html,"github-markdown":True})
-            return response.json()["image_base64"]
+        url = "http://127.0.0.1:6789/html/img" # 非公开内容(xxtg666/XT-api 服务器地址)
+        try:
+            response = httpx.post(url, data = {"html": html, "github-markdown": True, "timeout": 1000})
+        except:
+            response = httpx.post(url, data = {"html": html, "github-markdown": True, "timeout": 1000})
+        return response.json()["image_base64"]
     async def getGithubMarkdown(self, text: str) -> str:
+        text = text.replace("\\","\\\\")
         async with httpx.AsyncClient() as client:
             url = "https://api.github.com/markdown"
             response = await client.post(url, json = {"text": text})
             return response.text
     async def getEditorData(self, data_id: str) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://127.0.0.1/get/"+data_id # 非公开内容
+            url = "https://127.0.0.1/get/"+data_id # 非公开内容(XTBotChatGPTv2 Web Editor网址)
             response = await client.get(url)
             return response.text
     async def uploadEditorData(self, chat_history: list) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://127.0.0.1/upload" # 非公开内容
+            url = "https://127.0.0.1/upload" # 非公开内容(XTBotChatGPTv2 Web Editor网址)
             response = await client.post(url, json = chat_history)
             return response.text
 
