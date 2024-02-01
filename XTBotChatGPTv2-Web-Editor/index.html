@@ -1,0 +1,271 @@
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="openai.main.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="openai.chunk.css">
+    <link rel="stylesheet" type="text/css" href="main.css">
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/123957996" sizes="16x16">
+    <script src="jquery-3.7.0.min.js"></script>
+    <title>XTBotChatGPTv2 Web Editor</title>
+</head>
+
+<body>
+    <div class="popup" id="popup-box"></div>
+    <div class="popup2" id="popup-box2"></div>
+    <div id="root">
+        <div class="route-container">
+            <div class="page-wrapper app-wrapper">
+                <div class="app-header">
+                    <p>XTBotChatGPTv2 网页编辑器</p>
+                    <small><a href="https://xtbot-status.xxtg666.top/">查看请求状态</a></small>
+                </div>
+                <div class="pg-root page-body full-width flush">
+                    <div class="pg-welcome body-small" id="pg-left">
+                        <h3>提示</h3>
+                        <p>你可以在这里编辑 XTBotChatGPTv2 的聊天记录</p>
+                        <button tabindex="0" class="btn btn-sm btn-filled btn-neutral" type="button"
+                            data-testid="pg-save-btn" aria-haspopup="true" aria-expanded="false"
+                            id="btn-load-from-server">
+                            <span class="btn-label-wrap">
+                                <span class="btn-label-inner">从服务器加载数据</span>
+                            </span>
+                        </button>
+                        <div class="subheading">Keep in mind</div>
+                        <div class="icon-indent ">
+                            <div class="icon-indent-icon">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24"
+                                    stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </div>
+                            <div class="icon-indent-content">
+                                Use good judgment when sharing outputs, and attribute them to your name or company. <a
+                                    href="https://openai.com/policies/sharing-publication-policy" target="_blank"
+                                    rel="noreferrer">Learn more</a>
+                                .
+                            </div>
+                        </div>
+                        <div class="icon-indent ">
+                            <div class="icon-indent-icon">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24"
+                                    stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                            </div>
+                            <div class="icon-indent-content">
+                                Requests submitted to our API and Playground will not be used to train or improve future
+                                models. <a href="https://openai.com/policies/usage-policies" target="_blank"
+                                    rel="noreferrer">Learn more</a>
+                                .
+                            </div>
+                        </div>
+                        <div class="icon-indent ">
+                            <div class="icon-indent-icon">
+                                <svg stroke="currentColor" fill="none" stroke-width="2" viewBox="0 0 24 24"
+                                    stroke-linecap="round" stroke-linejoin="round" height="1em" width="1em"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </div>
+                            <div class="icon-indent-content">Our default models' training data cuts off in 2021, so they
+                                may not have knowledge of current events.</div>
+                        </div>
+                        <button tabindex="0" class="btn btn-sm btn-minimal btn-neutral pg-welcome-close" type="button"
+                            aria-label="Close" id="btn-close-left">
+                            <span class="btn-label-wrap">
+                                <span class="btn-label-inner">
+                                    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16"
+                                        height="20px" width="20px" xmlns="http://www.w3.org/2000/svg">
+                                        <path fill-rule="evenodd" clip-rule="evenodd"
+                                            d="M8 8.707l3.646 3.647.708-.707L8.707 8l3.647-3.646-.707-.708L8 7.293 4.354 3.646l-.707.708L7.293 8l-3.646 3.646.707.708L8 8.707z">
+                                        </path>
+                                    </svg>
+                                </span>
+                            </span>
+                        </button>
+
+                    </div>
+                    <div class="pg-main">
+                        <div class="pg-header">
+                            <div class="pg-header-section pg-header-title">
+                                <h4 class="pg-page-title">编辑区</h4>
+                            </div>
+
+                            <div class="pg-header-section pg-header-actions">
+
+                                <button tabindex="0" class="btn btn-sm btn-filled btn-neutral" type="button"
+                                    id="btn-convert">
+                                    <span class="btn-label-wrap">
+                                        <span class="btn-label-inner" id="btn-convert-txt">转到 JSON 视图</span>
+                                    </span>
+                                </button>
+                                <button tabindex="0" class="btn btn-sm btn-filled btn-primary" type="button"
+                                    data-testid="pg-submit-btn" aria-haspopup="true" aria-expanded="false"
+                                    id="btn-submit">
+                                    <span class="btn-label-wrap">
+                                        <span class="btn-label-inner">提交</span>
+                                    </span>
+                                </button>
+
+                            </div>
+
+                        </div>
+                        <div class="pg-body">
+                            <div id="modal-inputnum" class="modal">
+                                <div class="modal-content">
+                                    <h3>从服务器加载数据</h3>
+                                    <p>数据ID <input id="edit-data-id" class="text-input text-input-header-buffer"
+                                            placeholder=""></input></p>
+                                    <p>注意: 将会覆盖编辑器内现有内容</p>
+                                    <button tabindex="0" class="btn btn-sm btn-filled btn-neutral" type="button"
+                                        onclick="closeModal();">
+                                        <span class="btn-label-wrap">
+                                            <span class="btn-label-inner">取消</span>
+                                        </span>
+                                    </button>
+                                    <button tabindex="0" class="btn btn-sm btn-filled btn-primary" type="button"
+                                        data-testid="pg-submit-btn" aria-haspopup="true" aria-expanded="false"
+                                        id="btn-confirm-server-data">
+                                        <span class="btn-label-wrap">
+                                            <span class="btn-label-inner">确认</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="modal-submitsuccess" class="modal">
+                                <div class="modal-content">
+                                    <h3>聊天记录提交成功</h3>
+                                    <p>数据ID: <strong id="s-data-id">-1</strong></p>
+                                    <p>在群内使用命令 <code id="btn-code">.cg editor <span id="s-data-id2">-1</span></code>
+                                        设置聊天记录</p>
+                                    <button tabindex="0" class="btn btn-sm btn-filled btn-primary" type="button"
+                                        onclick="closeModal2();" data-testid="pg-submit-btn" aria-haspopup="true"
+                                        aria-expanded="false">
+                                        <span class="btn-label-wrap">
+                                            <span class="btn-label-inner">确认</span>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pg-editor" id="pg-editor">
+                                <div class="pg-content-body">
+                                    <div class="chat-pg-body body-small">
+                                        <div>
+                                            <div class="text-input-with-header chat-pg-instructions">
+                                                <div class="text-input-header-subheading subheading">System</div>
+                                                <div class="text-input-header-wrapper overflow-wrapper text-input">
+                                                    <textarea aria-label="Input" id="edit-system"
+                                                        class="text-input text-input-lg text-input-full text-input-header-buffer"
+                                                        placeholder="[ 写入 system 信息 ]"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="chat-pg-right-wrapper">
+                                            <div class="chat-pg-panel-wrapper">
+                                                <div class="chat-pg-exchange-container">
+                                                    <div class="chat-pg-exchange">
+                                                        <div id="list-message"></div>
+                                                        <div class="chat-pg-message add-message" id="btn-addmessage">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                                fill="none" class="icon" width="20" height="20">
+                                                                <path
+                                                                    d="M10 16.6667C13.6819 16.6667 16.6667 13.6819 16.6667 9.99999C16.6667 6.3181 13.6819 3.33333 10 3.33333C6.31814 3.33333 3.33337 6.3181 3.33337 9.99999C3.33337 13.6819 6.31814 16.6667 10 16.6667Z"
+                                                                    stroke="#353740" stroke-width="1.5"
+                                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                                </path>
+                                                                <path d="M10 7.33333V12.6667" stroke="#353740"
+                                                                    stroke-width="1.5" stroke-linecap="round"
+                                                                    stroke-linejoin="round"></path>
+                                                                <path d="M7.33337 10H12.6667" stroke="#353740"
+                                                                    stroke-width="1.5" stroke-linecap="round"
+                                                                    stroke-linejoin="round"></path>
+                                                            </svg>
+                                                            <span class="text">添加信息</span>
+                                                        </div>
+                                                        <div class="chat-pg-bottom-div"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="pg-json" class="hidden pg-editor">
+                                <div class="text-input-with-header chat-pg-instructions">
+                                    <div class="text-input-header-subheading subheading">Json</div>
+                                    <div class="text-input-header-wrapper overflow-wrapper text-input">
+                                        <textarea aria-label="Input" id="edit-json"
+                                            class="text-input text-input-lg text-input-full text-input-header-buffer"
+                                            placeholder="[ 直接编辑 JSON 数据 ]"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pg-right noscroll">
+                                <div class="pg-right-panel-mask"></div>
+                                <div class="pg-right-content" id="pg-right">
+                                    <h4 style="text-align: center;">调用 OpenAI API</h4>
+                                    <p style="text-align: center;"><small>自动添加一条 assistant 信息</small></p>
+                                    <div class="parameter-panel">
+                                        <div class="parameter-panel-grid">
+                                            <div aria-haspopup="true">
+                                                <div class="slider css-160w4cx">
+                                                    <div class="css-1povu0j">
+                                                        <span class="body-small css-bjbdno">OpenAI API key</span>
+                                                        <input class="text-input text-input-sm css-17eqq1p" id="edit-key" type="text" placeholder="sk-">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="parameter-panel">
+                                        <div class="parameter-panel-grid">
+                                            <div aria-haspopup="true">
+                                                <div class="slider css-160w4cx css-1povu0j">
+                                                    <fieldset style="border-radius: 3px; border: 1px solid #c5c5d2;">
+                                                        <legend class="body-small css-bjbdno">选择 Model</legend>
+                                                        <input class="mode-select-label" type="radio" value="gpt-3.5-turbo" name="model" id="gpt-3.5-turbo" checked>
+                                                        <label for="gpt-3.5-turbo" class="radio-label">gpt-3.5-turbo</label>
+                                                        <br>
+                                                        <input class="mode-select-label" type="radio" value="gpt-4" name="model" id="gpt-4">
+                                                        <label for="gpt-4" class="radio-label">gpt-4</label>
+                                                    </fieldset>
+                                                </div><br>
+                                                <div class="slider css-160w4cx css-1povu0j" style="text-align: right;">
+                                                    <button tabindex="0" class="btn btn-sm btn-filled btn-neutral" type="button"
+                                                        data-testid="pg-save-btn" aria-haspopup="true" aria-expanded="false"
+                                                        id="btn-send-openai">
+                                                        <span class="btn-label-wrap">
+                                                            <span class="btn-label-inner">发送</span>
+                                                        </span>
+                                                    </button>
+                                                </div><br>
+                                                <div class="pg-alert danger hidden noscroll" id="alert-error">
+                                                    <div class="pg-alert-body">
+                                                        <p id="alert-error-text" style="word-break:break-all;"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="layers-root"></div>
+    </div>
+    <script src="main.js"></script>
+</body>
+
+</html>

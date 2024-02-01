@@ -1,0 +1,130 @@
+.hidden {
+    display: none;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    padding: 10px 20px;
+    background-color: #fdebeb;
+    border: 1px solid #ef4146;
+    border-radius: 4px;
+    z-index: 9999;
+}
+
+.popup2 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    padding: 10px 20px;
+    background-color: #ebfffc;
+    border: 1px solid #00d1b2;
+    border-radius: 4px;
+    z-index: 9999;
+}
+
+@keyframes slideIn {
+    to {
+        transform: translateX(-50%) translateY(50px);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(-50%) translateY(50px);
+    }
+
+    to {
+        transform: translateX(-50%) translateY(-100%);
+    }
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 999;
+    text-align: center;
+}
+.top3 {
+    z-index: 500;
+}
+.noscroll ::-webkit-scrollbar {
+    display: none;
+}
+.noscroll{
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.loading {
+    cursor: default;
+    pointer-events: none;
+}
+
+.loading:before {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    color: #10a37f;
+    border: 1px solid #10a37f;
+    border-radius: 50%;
+    vertical-align: -10%;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 30%, 0% 30%);
+    animation: rotate 1s linear infinite;
+}
+.loading-white {
+    cursor: default;
+    pointer-events: none;
+}
+
+.loading-white:before {
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 0.5em;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    border-radius: 50%;
+    vertical-align: -10%;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 30%, 0% 30%);
+    animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotatez(0deg);
+    }
+
+    to {
+        transform: rotatez(360deg);
+    }
+}

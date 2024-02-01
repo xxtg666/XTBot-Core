@@ -160,7 +160,7 @@ async def _(matcher: Matcher,
                 if data_id.startswith("ERR"):
                     await cg.finish(prefix + data_id, at_sender=True)
                 else:
-                    await cg.finish(prefix + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", at_sender=True)
+                    await cg.finish(prefix + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", at_sender=True) # 网页编辑器源码在 XTBotChatGPTv2-Web-Editor
         case "sign":
             user_sign = ud.getUserSign(uid)
             last_sign_day = user_sign["last_sign_day"]
@@ -404,7 +404,7 @@ async def _(matcher: Matcher,
                     await cg.finish(prefix + data_id, at_sender=True)
                 else:
                     await cg.finish(
-                        prefix + uid + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}",
+                        prefix + uid + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", # 网页编辑器源码在 XTBotChatGPTv2-Web-Editor
                         at_sender=True)
         case "sign":
             user_sign = ud.getUserSign(uid := args[1])
