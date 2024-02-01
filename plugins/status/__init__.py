@@ -43,8 +43,6 @@ OS：{os.name}
 登录用户：{getpass.getuser()}\n
 查询XTBotChatGPTv2状态: 
 https://xtbot-status.xxtg666.top/
-"""
+""" # 该网站使用Cloudflare worker搭建，源码在 xtbot-status-worker.js
 
     await matcher.finish(Message(at + "\n" + answer))
-
-

@@ -124,14 +124,15 @@ class WEB_API_UTILS:
             url = "https://api.github.com/markdown"
             response = await client.post(url, json = {"text": text})
             return response.text
+    # 下方api使用Cloudflare worker搭建 源码在 xtbot-editor-api-worker.js
     async def getEditorData(self, data_id: str) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://127.0.0.1/get/"+data_id # 非公开内容(XTBotChatGPTv2 Web Editor网址)
+            url = "https://xtbot-editor-api.xxtg666.top/get/"+data_id # 非公开内容(XTBotChatGPTv2 Web Editor api网址)
             response = await client.get(url)
             return response.text
     async def uploadEditorData(self, chat_history: list) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://127.0.0.1/upload" # 非公开内容(XTBotChatGPTv2 Web Editor网址)
+            url = "https://xtbot-editor-api.xxtg666.top/upload" # 非公开内容(XTBotChatGPTv2 Web Editor api网址)
             response = await client.post(url, json = chat_history)
             return response.text
 
