@@ -79,6 +79,7 @@ async def _(matcher: Matcher,
     global xdbot2quickmath_on
     global xdbot2quickmath_image_on
     global prefix
+    global rec
     args=args.extract_plain_text()
     if "=" in args:
         if not xdbot2quickmath_on:
@@ -101,24 +102,30 @@ async def _(matcher: Matcher,
                 case "*":
                     await x2q.finish(MessageSegment.image(await getImageApi(prefix+str(int(args[0])*int(args[2])))))
     else:
-        if args == "on" or args == "启用":
+        if args == "+" or args == "启用":
             xdbot2quickmath_on=True
             await x2q.finish("xdbot2quickmath on")
-        elif args == "off" or args == "禁用":
+        elif args == "-" or args == "禁用":
             xdbot2quickmath_on=False
             await x2q.finish("xdbot2quickmath off")
-        elif args == "prefixoff":
+        elif args == "p-":
             prefix=""
             await x2q.finish("xdbot2quickmath prefix off")
-        elif args == "prefixon":
+        elif args == "p+":
             prefix="XDBOT2 QUICK MATH 答案 | "
             await x2q.finish("xdbot2quickmath prefix on")
-        elif args == "imageoff":
+        elif args == "i-":
             xdbot2quickmath_image_on=False
             await x2q.finish("xdbot2quickmath image off")
-        elif args == "imageon":
+        elif args == "i+":
             xdbot2quickmath_image_on=True
             await x2q.finish("xdbot2quickmath image on")
+        elif args == "da-":
+            rec = "XDBOT2 QUICK MATH | OCR\n识别结果: {a}\n处理算式: {b}\n计算答案: {c}"
+            await x2q.finish("xdbot2quickmath direct answer off")
+        elif args == "da+":
+            rec = "{c}"
+            await x2q.finish("xdbot2quickmath direct answer on")
 
 x2qn = nonebot.on_regex(r"^\[CQ:image")
 @x2qn.handle()
