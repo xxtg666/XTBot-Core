@@ -15,13 +15,15 @@ import asyncio
 import traceback
 import time
 
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
-TOKEN = "" # 非公开内容
-CHANNEL_ID = 0 # 非公开内容
-CHANNEL_ID_GH = 0 # 非公开内容
-QQ_ID = 0 # 非公开内容
-QQ_ID_GH = 0 # 非公开内容
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
+TOKEN = ""
+CHANNEL_ID = 0
+CHANNEL_ID_GH = 0
+QQ_ID = 0
+QQ_ID_GH = 0
+QQ_FORWARD_FAILED = "qq_forward_failed"
+QQ_FORWARD_OK = "qq_forward_ok"
 already_start_discord_bot = False
 intents = discord.Intents.default()
 intents.message_content = True
@@ -135,15 +137,33 @@ def startDiscordBot():
                     r = process_xdbot_command(message.author.id,str(message.content).strip())
                     await send_list_message(r,CHANNEL_ID,QQ_ID)
                     return
-                await gbot.send_group_msg(group_id=QQ_ID, message=replace_ids_with_cq_at(ms))
+                try:
+                    await gbot.send_group_msg(group_id=QQ_ID, message=replace_ids_with_cq_at(ms))
+                    await message.add_reaction(reaction := discord.utils.get(message.guild.emojis, name=QQ_FORWARD_OK))
+                    await asyncio.sleep(10)
+                    await message.remove_reaction(reaction,dcclient.user)
+                except:
+                    await message.add_reaction(discord.utils.get(message.guild.emojis, name=QQ_FORWARD_FAILED))
             elif message.channel.id == CHANNEL_ID_GH:
                 if str(message.content).strip().startswith("~"):
                     r = process_xdbot_command(message.author.id,str(message.content).strip())
                     await send_list_message(r,CHANNEL_ID_GH,QQ_ID_GH)
                     return
-                await gbot.send_group_msg(group_id=QQ_ID_GH, message=replace_ids_with_cq_at(ms))
-            elif message.channel.id == 1133053561408860191: # DEV
-                await gbot.send_group_msg(group_id=1007654102, message=ms)
+                try:
+                    await gbot.send_group_msg(group_id=QQ_ID_GH, message=replace_ids_with_cq_at(ms))
+                    await message.add_reaction(reaction := discord.utils.get(message.guild.emojis, name=QQ_FORWARD_OK))
+                    await asyncio.sleep(10)
+                    await message.remove_reaction(reaction,dcclient.user)
+                except:
+                    await message.add_reaction(discord.utils.get(message.guild.emojis, name=QQ_FORWARD_FAILED))
+            elif message.channel.id == 0: # DEV
+                try:
+                    await gbot.send_group_msg(group_id=0, message=ms)
+                    await message.add_reaction(reaction := discord.utils.get(message.guild.emojis, name=QQ_FORWARD_OK))
+                    await asyncio.sleep(10)
+                    await message.remove_reaction(reaction,dcclient.user)
+                except:
+                    await message.add_reaction(discord.utils.get(message.guild.emojis, name=QQ_FORWARD_FAILED))
         dcclient.run(TOKEN)
     except:
         del dcclient
