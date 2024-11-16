@@ -16,8 +16,8 @@ from nonebot.adapters import Event
 from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
 
 ud = USER_DATA_UTILS()
 wa = WEB_API_UTILS()
@@ -28,19 +28,22 @@ gm = GROUP_MESSAGE_UTILS()
 review_ids = {}
 prefix = " [XTBotChatGPTv2]\n"
 
-async def generate_reply_message(use_tokens: list[int], have_tokens: int, message: str, need_image: bool = True, not_use_token=False) -> Message:
+async def generate_reply_message(use_tokens: list[int], have_tokens: int, message: str, need_image: bool = True, not_use_token: bool = False, model_name: str = "") -> Message:
     if not_use_token:
-        text = prefix + f"◈ Tokens | {use_tokens[0]}+{use_tokens[1]}={sum(use_tokens)} | 不消耗\n\n{message}"
+        text = prefix + f"◈ {model_name} | {use_tokens[0]}+{use_tokens[1]}={sum(use_tokens)} Tokens\n\n{message}"
     else:
         text = prefix + f"◈ Tokens | 本次使用 {use_tokens[0]}+{use_tokens[1]}={sum(use_tokens)} | 剩余 {have_tokens}\n\n{message}"
-    if not need_image:
-        return Message(MessageSegment.text(text))
-    try:
-        html = await wa.getGithubMarkdown(message)
-        img_base64 = await wa.getImageBase64(html)
-        return Message(MessageSegment.text(text+"\n\n")+MessageSegment.image(base64.b64decode(img_base64)))
-    except:
-        return Message(MessageSegment.text(text+"\n\n[图片生成失败]"))
+    #if not need_image:
+    return Message(MessageSegment.text(text))
+    # try:
+    #     html = await wa.getGithubMarkdown(message)
+    #     img_base64 = await wa.getImageBase64(html)
+    #     return Message(MessageSegment.text(text+"\n\n")+MessageSegment.image(base64.b64decode(img_base64)))
+    # except:
+    #     return Message(MessageSegment.text(text+"\n\n[图片生成失败]"))
+
+def genRandomID(length: int = 8) -> str:
+    return "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789",k=length))
 
 cg = nonebot.on_command("cg")
 @cg.handle()
@@ -53,27 +56,25 @@ async def _(matcher: Matcher,
     uid = event.get_user_id()
     match args.split(" ")[0]:
         case "help":
-            await cg.finish('''[XTBotChatGPTv2] 使用帮助: \n
+            await cg.finish(f'''[XTBotChatGPTv2] 使用帮助: \n
 .cg help - 查看此帮助
-.cg groupmsg [数量] - 总结群聊消息,数量默认100,最大300(1.5倍token消耗量)
 .cg reset [系统信息] - 重置聊天记录, 可选参数设置系统信息
 .cg reset_dev - 重置聊天记录, 设置系统信息为 [ChatGPT Developer Mode]
 .cg list - 查看聊天记录
 .cg editor - 打开网页编辑器修改/导出/导入聊天记录
 .cg editor [dataid] - 从网页编辑器加载聊天记录
-.cg sign - 查看签到记录(直接发送「签到」进行签到)
 .cg error - 查看上一次报错信息
 .cg token - 查看你剩余的 token 数量
 .cg sum - 总结并缩短聊天记录, 用作后续的上下文提示(会移除系统信息)
 .cg retry - 重试上一条信息
 .cg back - 删除最后一条发送和回复的信息
-.cg 16k <信息> - 使用gpt-3.5-turbo-16k回复(2倍token消耗量)
-.cg gpt4 <信息> - 使用gpt-4回复(仅限部分用户可用)
-.cg <信息> - 使用gpt-3.5-turbo回复\n
+.cg o1-m <信息> - 使用 o1-mini 回复
+.cg o1-p <信息> - 使用 o1-preview 回复
+.cg <信息> - 使用 {gpt.getDefaultModel()} 回复\n
 ◈ 查看请求状态 https://xtbot-status.xxtg666.top/
-◈ 所有关于聊天记录的操作只适用于 gpt-3.5, gpt-4 不记录聊天记录.
 ◈ 携带的聊天记录越长, 单次 token 消耗越多, 发送新问题时建议先重置聊天记录.
-/!\\警告: 总结群聊消息功能会消耗大量 token, 谨慎使用.''',at_sender=True)
+/!\\警告: 涉及群聊消息的功能会消耗大量 token, 谨慎使用.''' + "\n\n◈ 全局免费已启用 所有功能不消耗 token" if gpt.config["free"] == "true" else ""
+                            ,at_sender=True)
         case "groupmsg":
             try:
                 group_id = str(event.group_id)
@@ -85,11 +86,11 @@ async def _(matcher: Matcher,
                 try:
                     num = int(snum)
                 except:
-                    await cg.finish(prefix + "错误：非法聊天记录数量", at_sender=True)
+                    await cg.finish(prefix + "错误：无效聊天记录数量", at_sender=True)
                 if num > 300:
-                    await cg.finish(prefix+"错误：聊天记录数量不能超过200",at_sender=True)
+                    await cg.finish(prefix+"错误：聊天记录数量不能超过300",at_sender=True)
                 if num < 1:
-                    await cg.finish(prefix+"错误：非法聊天记录数量",at_sender=True)
+                    await cg.finish(prefix+"错误：无效聊天记录数量",at_sender=True)
             message_history = gm.getMessageHistory(group_id)
             message_history = gm.tempDelMessageHistory(message_history, num)
             prompt = ""
@@ -101,21 +102,23 @@ async def _(matcher: Matcher,
             prompt = prompt[0:-2]
             chat_history = [{"role": "system", "content": gm.prompt_en}]
             try:
-                issue_number = gh.createNewTask(uid, "gpt-3.5-turbo-16k", chat_history, prompt)
+                issue_number = gh.createNewTask(uid, gpt.getDefaultModel(), chat_history, prompt)
             except:
                 ud.setUserCachedErr(uid, err := traceback.format_exc())
                 await cg.finish(prefix + "发生错误:\n" + err.split("\n")[-2], at_sender=True)
             try:
-                r = await gpt.getChatGPT(chat_history,prompt,user_info,"gpt-3.5-turbo-16k",1.5)
+                r = await gpt.getChatGPT(chat_history,prompt,user_info)
             except:
                 ud.setUserCachedErr(uid,err := traceback.format_exc())
                 gh.endTask(issue_number,err,[0,0])
                 await cg.finish(prefix+"发生错误:\n"+err.split("\n")[-2],at_sender=True)
-            user_info["tokens"] -= (token := r[0]+r[1])
+            token = r[0] + r[1]
+            if gpt.config["free"] == "false":
+                user_info["tokens"] -= token
             user_info["used_tokens"] += token
             ud.setUserInfo(uid,user_info)
             gh.endTask(issue_number,r[2][-1]["content"],r[0:-1])
-            await cg.finish(await generate_reply_message(r[0:-1],user_info["tokens"],r[2][-1]["content"],False),at_sender=True)
+            await cg.finish(await generate_reply_message(r[0:-1],user_info["tokens"],r[2][-1]["content"],False,False if gpt.config["free"] == "false" else True,gpt.getDefaultModel()),at_sender=True)
         case "reset":
             sysmsg = args.replace("reset","",1).strip()
             if sysmsg == "":
@@ -138,7 +141,7 @@ async def _(matcher: Matcher,
                     "type": "node",
                     "data": {
                         "name": "role: " + m["role"],
-                        "uin": 2920571540 if m["role"] != "user" else int(uid),
+                        "uin": 6666666666 if m["role"] != "user" else int(uid),
                         "content": m["content"],
                     }
                 } for m in msg
@@ -160,19 +163,7 @@ async def _(matcher: Matcher,
                 if data_id.startswith("ERR"):
                     await cg.finish(prefix + data_id, at_sender=True)
                 else:
-                    await cg.finish(prefix + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", at_sender=True) # 网页编辑器源码在 XTBotChatGPTv2-Web-Editor
-        case "sign":
-            user_sign = ud.getUserSign(uid)
-            last_sign_day = user_sign["last_sign_day"]
-            sign_days = user_sign["sign_days"]
-            continuous_sign_days = user_sign["continuous_sign_days"]
-            tokens_get_by_sign = user_sign["tokens_get_by_sign"]
-            await cg.finish(prefix+f"签到记录查询\n"
-                            f"上次签到日期: {last_sign_day}\n"
-                            f"总签到天数: {sign_days}\n"
-                            f"连续签到天数: {continuous_sign_days}\n"
-                            f"通过签到获得的 token 数量: {tokens_get_by_sign}",
-                            at_sender=True)
+                    await cg.finish(prefix + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", at_sender=True)
         case "error":
             err = ud.getUserCachedErr(uid)
             if err["last_err_time"] == 0:
@@ -196,7 +187,7 @@ async def _(matcher: Matcher,
             user_info = ud.getUserInfo(uid)
             if user_info["tokens"] <= 0:
                 await cg.finish(prefix+"tokens 数量不足",at_sender=True)
-            issue_number = gh.createNewTask(uid, "gpt-3.5-turbo", chat_history := ud.getUserChatHistory(uid),
+            issue_number = gh.createNewTask(uid, gpt.getDefaultModel(), chat_history := ud.getUserChatHistory(uid),
                                             prompt := "简要总结一下对话内容，用作后续的上下文提示 prompt，控制在 200 字以内")
             try:
                 r = await gpt.getChatGPT(chat_history,prompt,user_info)
@@ -205,17 +196,19 @@ async def _(matcher: Matcher,
                 gh.endTask(issue_number,err,[0,0])
                 await cg.finish(prefix+"发生错误:\n"+err.split("\n")[-2],at_sender=True)
             ud.setUserChatHistory(uid, [{"role": "system", "content": r[2][-1]["content"]}])
-            user_info["tokens"] -= (token := r[0]+r[1])
+            token = r[0] + r[1]
+            if gpt.config["free"] == "false":
+                user_info["tokens"] -= token
             user_info["used_tokens"] += token
             ud.setUserInfo(uid,user_info)
             gh.endTask(issue_number,r[2][-1]["content"],r[0:-1])
-            await cg.finish(await generate_reply_message(r[0:-1],user_info["tokens"],r[2][-1]["content"],False),at_sender=True)
+            await cg.finish(await generate_reply_message(r[0:-1],user_info["tokens"],r[2][-1]["content"],False,False if gpt.config["free"] == "false" else True,gpt.getDefaultModel()),at_sender=True)
         case "retry":
             user_info = ud.getUserInfo(uid)
             if user_info["tokens"] <= 0:
                 await cg.finish(prefix+"tokens 数量不足",at_sender=True)
             chat_history = ud.getUserChatHistory(uid)[0:-1]
-            issue_number = gh.createNewTask(uid,"gpt-3.5-turbo",chat_history[0:-1],chat_history[-1]["content"])
+            issue_number = gh.createNewTask(uid,gpt.getDefaultModel(),chat_history[0:-1],chat_history[-1]["content"])
             try:
                 r = await gpt.getChatGPT(chat_history[0:-1],chat_history[-1]["content"],user_info)
             except:
@@ -223,19 +216,21 @@ async def _(matcher: Matcher,
                 gh.endTask(issue_number, err, [0, 0])
                 await cg.finish(prefix+"发生错误:\n"+err.split("\n")[-2],at_sender=True)
             ud.setUserChatHistory(uid,r[2])
-            user_info["tokens"] -= (token := r[0] + r[1])
+            token = r[0] + r[1]
+            if gpt.config["free"] == "false":
+                user_info["tokens"] -= token
             user_info["used_tokens"] += token
             ud.setUserInfo(uid, user_info)
             gh.endTask(issue_number, r[2][-1]["content"], r[0:-1])
-            await cg.finish(await generate_reply_message(r[0:-1], user_info["tokens"], r[2][-1]["content"]),at_sender=True)
-        case "gpt4":
+            await cg.finish(await generate_reply_message(r[0:-1], user_info["tokens"], r[2][-1]["content"],not_use_token=False if gpt.config["free"] == "false" else True,model_name=gpt.getDefaultModel()),at_sender=True)
+        case "o1-m":
             try:
-                issue_number = gh.createNewTask(uid,"gpt-4",[],message := args.replace("gpt4 ","",1))
+                issue_number = gh.createNewTask(uid,"o1-mini",[],message := args.replace("o1 ","",1))
             except:
                 ud.setUserCachedErr(uid, err := traceback.format_exc())
                 await cg.finish(prefix + "发生错误:\n" + err.split("\n")[-2], at_sender=True)
             try:
-                r = await gpt.getGPT4(message,user_info := ud.getUserInfo(uid))
+                r = await gpt.getGPT4(message,user_info := ud.getUserInfo(uid), "o1-mini")
             except:
                 ud.setUserCachedErr(uid,err := traceback.format_exc())
                 gh.endTask(issue_number, err, [0, 0])
@@ -243,39 +238,53 @@ async def _(matcher: Matcher,
             gh.endTask(issue_number, r, [message_tokens := gpt.countTokens(message), reply_tokens := gpt.countTokens(r)])
             await cg.finish(await generate_reply_message([
                 message_tokens, reply_tokens
-            ], user_info["tokens"], r, True if r != "错误: 你不能使用XTBotChatGPTv2-GPT4" else False,True),at_sender=True)
+            ], user_info["tokens"], r, True if r != "错误: 你没有权限使用 o1-mini 模型" else False,True,"o1-mini"),at_sender=True)
+        case "o1-p":
+            try:
+                issue_number = gh.createNewTask(uid, "o1-preview", [], message := args.replace("o1 ", "", 1))
+            except:
+                ud.setUserCachedErr(uid, err := traceback.format_exc())
+                await cg.finish(prefix + "发生错误:\n" + err.split("\n")[-2], at_sender=True)
+            try:
+                r = await gpt.getGPT4(message, user_info := ud.getUserInfo(uid), "o1-preview")
+            except:
+                ud.setUserCachedErr(uid, err := traceback.format_exc())
+                gh.endTask(issue_number, err, [0, 0])
+                await cg.finish(prefix + "发生错误:\n" + err.split("\n")[-2], at_sender=True)
+            gh.endTask(issue_number, r,
+                       [message_tokens := gpt.countTokens(message), reply_tokens := gpt.countTokens(r)])
+            await cg.finish(await generate_reply_message([
+                message_tokens, reply_tokens
+            ], user_info["tokens"], r, True if r != "错误: 你没有权限使用 o1-preview 模型" else False, True, "o1-preview"),
+                            at_sender=True)
         case "":
             await cg.finish(prefix+"使用 .cg help 查看命令帮助",at_sender=True)
         case _:
             user_info = ud.getUserInfo(uid)
-            model = "gpt-3.5-turbo"
+            model = gpt.getDefaultModel()
             token_multiplier = 1.0
             msg = args.replace("@XTBot","",1)
-            if msg.startswith("16k "):
-                msg = msg.replace("16k ","",1)
-                model = "gpt-3.5-turbo-16k"
-                token_multiplier = 2.0
             if user_info["tokens"] <= 0:
                 await cg.finish(prefix+"tokens 数量不足",at_sender=True)
             review_result = 1
             wait_times = 0
             if user_info.get("need_review",False):
-                review_message_id = (await bot.send_group_msg(group_id=0,message=prefix+f"{event.sender.nickname} 发送了一条待审核的信息:\n\n{msg}\n\n10秒内 回复1或任何内容通过 回复0拒绝(报错) 回复2拒绝(管理员操作)"))["message_id"] # 非公开内容
+                review_message_id = (await bot.send_group_msg(group_id=6666666666,message=prefix+f"{event.sender.nickname} 发送了一条待审核的信息:\n\n{msg}\n\n10秒内 回复1或任何内容通过 回复0拒绝(报错) 回复2拒绝(管理员操作)"))["message_id"]
                 review_ids[review_message_id] = "waiting"
                 for i in range(10):
                     if review_ids[review_message_id] == "0":
-                        await bot.send_group_msg(group_id=0,message=prefix+f"{event.sender.nickname} 的消息审核完成(拒绝,报错)") # 非公开内容
+                        await bot.send_group_msg(group_id=6666666666,message=prefix+f"{event.sender.nickname} 的消息审核完成(拒绝,报错)")
                         review_result = 0
                         del review_ids[review_message_id]
                         break
                     elif review_ids[review_message_id] == "1":
-                        await bot.send_group_msg(group_id=0, # 非公开内容
+                        await bot.send_group_msg(group_id=6666666666,
                                                  message=prefix + f"{event.sender.nickname} 的消息审核完成(通过)")
                         review_result = 1
                         del review_ids[review_message_id]
                         break
                     elif review_ids[review_message_id] == "2":
-                        await bot.send_group_msg(group_id=0, # 非公开内容
+                        await bot.send_group_msg(group_id=6666666666,
                                                  message=prefix + f"{event.sender.nickname} 的消息审核完成(拒绝,管理员操作)")
                         del review_ids[review_message_id]
                         await cg.finish(prefix+"消息发送被拒绝(管理员操作)",at_sender=True)
@@ -284,13 +293,13 @@ async def _(matcher: Matcher,
                         wait_times += 1
                         await asyncio.sleep(1)
                     else:
-                        await bot.send_group_msg(group_id=0, # 非公开内容
+                        await bot.send_group_msg(group_id=6666666666,
                                                  message=prefix + f"{event.sender.nickname} 的消息审核完成(通过)")
                         review_result = 1
                         del review_ids[review_message_id]
                         break
                 if wait_times == 10:
-                    await bot.send_group_msg(group_id=0, # 非公开内容
+                    await bot.send_group_msg(group_id=6666666666,
                                              message=prefix + f"{event.sender.nickname} 的消息超时自动审核完成(通过)")
                     review_result = 1
                     del review_ids[review_message_id]
@@ -309,20 +318,25 @@ async def _(matcher: Matcher,
                 gh.endTask(issue_number, err, [0, 0])
                 suffix = ""
                 if str(e).strip().startswith("This model's maximum context length is"):
-                    suffix = "\n\n处理建议:\n你的消息过长,请重置聊天记录或使用16k模型再试"
+                    suffix = "\n\n处理建议:\n你的消息过长,请重置聊天记录."
                 await cg.finish(prefix+"发生错误:\n"+err.split("\n")[-2]+suffix,at_sender=True)
             ud.setUserChatHistory(uid, r[2])
-            user_info["tokens"] -= (token := r[0] + r[1])
+            token = r[0] + r[1]
+            if gpt.config["free"] == "false":
+                user_info["tokens"] -= token
             user_info["used_tokens"] += token
             user_info["last_use_time"] = time.time()
             ud.setUserInfo(uid, user_info)
             gh.endTask(issue_number,r[2][-1]["content"],r[0:-1])
             await cg.finish(
-                await generate_reply_message(r[0:-1],
-                                            user_info["tokens"],
-                                            r[2][-1]["content"],
-                                            True if r[2][-1]["role"] != "XTBot" else False
-                                            ),at_sender=True
+                await generate_reply_message(
+                        r[0:-1],
+                        user_info["tokens"],
+                        r[2][-1]["content"],
+                        True if r[2][-1]["role"] != "XTBot" else False,
+                        False if gpt.config["free"] == "false" else True,
+                        model
+                    ),at_sender=True
             )
 
 cgsu = nonebot.on_command("cgsu")
@@ -332,7 +346,7 @@ async def _(matcher: Matcher,
         event: Event,
         args: Message = CommandArg()):
     args = args.extract_plain_text().strip().split(" ")
-    if event.get_user_id() != "1747433912":
+    if event.get_user_id() != "6666666666":
         await cgsu.finish(prefix+"无权限使用管理员命令",at_sender=True)
     match args[0]:
         case "help":
@@ -349,12 +363,13 @@ async def _(matcher: Matcher,
 .cgsu addtoken <uid> <token> - 为用户添加 token
 .cgsu ban <uid> - 封禁用户
 .cgsu pardon <uid> - 解封用户
-.cgsu allowgpt4 <uid> <true|false> - 允许/取消用户使用 gpt4
+.cgsu allow-o1 <uid> <true|false> - 允许/拒绝用户使用 o1-mini
 .cgsu apikey <apikey> - 设置 api key
 .cgsu apibase <apibase> - 设置 api base
 .cgsu apikey4 <apikey> - 设置用于 gpt4 的 api key
 .cgsu apibase4 <apibase> - 设置用于 gpt4 的 api base
-.cgsu needreview <uid> <true|false> - 设置用户消息是否需要审核''', at_sender=True)
+.cgsu needreview <uid> <true|false> - 设置用户消息是否需要审核
+.cgsu free <true|false> - 全局不消耗 token''', at_sender=True)
         case "initall":
             init_token = int(args[1])
             user_list = await bot.get_group_member_list(group_id=event.group_id)
@@ -377,7 +392,7 @@ async def _(matcher: Matcher,
                     "type": "node",
                     "data": {
                         "name": "role: " + m["role"],
-                        "uin": 2920571540 if m["role"] != "user" else int(uid),
+                        "uin": 6666666666 if m["role"] != "user" else int(uid),
                         "content": m["content"],
                     }
                 } for m in msg
@@ -404,7 +419,7 @@ async def _(matcher: Matcher,
                     await cg.finish(prefix + data_id, at_sender=True)
                 else:
                     await cg.finish(
-                        prefix + uid + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}", # 网页编辑器源码在 XTBotChatGPTv2-Web-Editor
+                        prefix + uid + f"聊天记录已上传至网页编辑器\nhttps://xtbot-editor.xxtg666.top/?id={data_id}\n数据ID: {data_id}",
                         at_sender=True)
         case "sign":
             user_sign = ud.getUserSign(uid := args[1])
@@ -456,13 +471,13 @@ async def _(matcher: Matcher,
         case "pardon":
             ud.modifyUserInfo(uid := args[1], "banned", False)
             await cg.finish(prefix + "已解封用户 " + uid, at_sender=True)
-        case "allowgpt4":
+        case "allow-o1":
             if args[2] == "true":
                 ud.modifyUserInfo(uid := args[1], "allow_gpt4", True)
-                await cg.finish(prefix + "已允许用户 " + uid +" 使用 gpt4", at_sender=True)
+                await cg.finish(prefix + "已授予用户 " + uid +" 使用 o1-mini 模型的权限", at_sender=True)
             if args[2] == "false":
                 ud.modifyUserInfo(uid := args[1], "allow_gpt4", False)
-                await cg.finish(prefix + "已取消用户 " + uid +" 使用 gpt4", at_sender=True)
+                await cg.finish(prefix + "已拒绝用户 " + uid +" 使用 o1-mini 模型的权限", at_sender=True)
             await cg.finish(prefix + "参数无效", at_sender=True)
         case "apikey":
             ud.modifyConfig("api_key",args[1])
@@ -488,59 +503,71 @@ async def _(matcher: Matcher,
                 ud.modifyUserInfo(uid := args[1], "need_review", False)
                 await cg.finish(prefix + "已设置用户 " + uid + " 无需审核", at_sender=True)
             await cg.finish(prefix + "参数无效", at_sender=True)
+        case "free":
+            if args[1] == "true":
+                ud.modifyConfig("free","true")
+                gpt.refreshConfig()
+                await cg.finish(prefix + "已设置全局不消耗 token", at_sender=True)
+            if args[1] == "false":
+                ud.modifyConfig("free", "false")
+                gpt.refreshConfig()
+                await cg.finish(prefix + "已取消全局不消耗 token", at_sender=True)
+            await cg.finish(prefix + "参数无效", at_sender=True)
         case "":
             await cg.finish(prefix + "使用 .cgsu help 查看命令帮助", at_sender=True)
         case _:
             await cg.finish(prefix + "参数无效", at_sender=True)
 
-sign = nonebot.on_startswith(msg=("签到","sign",".sign","/sign","/签到"),ignorecase=True)
-@sign.handle()
-async def _(matcher: Matcher,
-        bot: Bot,
-        event: Event,):
-    uid = event.get_user_id()
-    user_sign = ud.getUserSign(uid)
-    if (last_sign_day := user_sign["last_sign_day"]) == (today_date := dt.getTodayDate()):
-        await sign.finish(prefix + "你今天已经签到过了",at_sender=True)
-    sign_day_list = user_sign["sign_day_list"]
-    sign_day_list.append(today_date)
-    sign_days = user_sign["sign_days"] + 1
-    continuous_sign_days = user_sign["continuous_sign_days"]
-    if last_sign_day == dt.getYesterdayDate():
-        continuous_sign_days += 1
-    else:
-        continuous_sign_days = 1
-    match continuous_sign_days:
-        case 1:
-            extra_token = 100
-        case 2:
-            extra_token = 200
-        case 3:
-            extra_token = 300
-        case 4:
-            extra_token = 400
-        case 5:
-            extra_token = 450
-        case _:
-            extra_token = 500
-    extra_token += continuous_sign_days*10 + random.randint(0,sign_days)*5
-    tokens_get_by_sign = user_sign["tokens_get_by_sign"] + extra_token
-    ud.setUserSign(uid,{
-        "sign_day_list": sign_day_list,
-        "sign_days": sign_days,
-        "last_sign_day": today_date,
-        "continuous_sign_days": continuous_sign_days,
-        "tokens_get_by_sign": tokens_get_by_sign
-    })
-    user_info = ud.getUserInfo(uid)
-    user_info["tokens"] += extra_token
-    tokens = user_info["tokens"]
-    ud.setUserInfo(uid, user_info)
-    await sign.finish(prefix+f"签到成功!\n"
-                             f"连续签到 {continuous_sign_days} 天\n"
-                             f"Tokens: {tokens - extra_token} -> {tokens} (+{extra_token})\n"
-                             f"使用 .cg help 查看命令帮助",
-                      at_sender=True)
+# sign = nonebot.on_startswith(msg=("签到","sign",".sign","/sign","/签到"),ignorecase=True)
+# @sign.handle()
+# async def _(matcher: Matcher,
+#         bot: Bot,
+#         event: Event,):
+#     uid = event.get_user_id()
+#     if uid in ["6666666666","6666666666","6666666666"]:
+#         await sign.finish()
+#     user_sign = ud.getUserSign(uid)
+#     if (last_sign_day := user_sign["last_sign_day"]) == (today_date := dt.getTodayDate()):
+#         await sign.finish(prefix + "你今天已经签到过了",at_sender=True)
+#     sign_day_list = user_sign["sign_day_list"]
+#     sign_day_list.append(today_date)
+#     sign_days = user_sign["sign_days"] + 1
+#     continuous_sign_days = user_sign["continuous_sign_days"]
+#     if last_sign_day == dt.getYesterdayDate():
+#         continuous_sign_days += 1
+#     else:
+#         continuous_sign_days = 1
+#     match continuous_sign_days:
+#         case 1:
+#             extra_token = 100
+#         case 2:
+#             extra_token = 200
+#         case 3:
+#             extra_token = 300
+#         case 4:
+#             extra_token = 400
+#         case 5:
+#             extra_token = 450
+#         case _:
+#             extra_token = 500
+#     extra_token += continuous_sign_days*10 + random.randint(0,sign_days)*5
+#     tokens_get_by_sign = user_sign["tokens_get_by_sign"] + extra_token
+#     ud.setUserSign(uid,{
+#         "sign_day_list": sign_day_list,
+#         "sign_days": sign_days,
+#         "last_sign_day": today_date,
+#         "continuous_sign_days": continuous_sign_days,
+#         "tokens_get_by_sign": tokens_get_by_sign
+#     })
+#     user_info = ud.getUserInfo(uid)
+#     user_info["tokens"] += extra_token
+#     tokens = user_info["tokens"]
+#     ud.setUserInfo(uid, user_info)
+#     await sign.finish(prefix+f"签到成功!\n"
+#                              f"连续签到 {continuous_sign_days} 天\n"
+#                              f"Tokens: {tokens - extra_token} -> {tokens} (+{extra_token})\n"
+#                              f"使用 .cg help 查看命令帮助",
+#                       at_sender=True)
 
 @nonebot.on_message().handle()
 async def _(matcher: Matcher,
@@ -549,12 +576,11 @@ async def _(matcher: Matcher,
     global review_ids
     if not (msg := str(event.get_message())).startswith(".cg groupmsg"):
         gm.appendMessageHistory(str(event.group_id),event.get_user_id(),event.sender.nickname,msg)
-    if event.get_user_id() != "1747433912":
+    if event.get_user_id() != "6666666666":
         return
     if event.reply:
         if event.reply.message_id in review_ids:
             review_ids[event.reply.message_id] = event.get_plaintext().strip()
-
 
 wit_prompt = '''Next I'll give you a chat message that a person replied to and asked "what is that".
 

@@ -1,0 +1,85 @@
+{
+  "endpoints": {
+    "zhipu": {
+      "url": "https://open.bigmodel.cn/api/paas/v4/",
+      "key": "6666666666"
+    },
+    "github": {
+        "url": "https://models.inference.ai.azure.com",
+        "key": "6666666666"
+    }
+  },
+  "default_model": "glm-4-air",
+  "public_models": {
+    "glm-4-air": {
+      "endpoint": "zhipu",
+      "limit": -1
+    },
+    "gpt-4o-mini": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "AI21-Jamba-1.5-Mini": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "Cohere-command-r": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "Meta-Llama-3.1-8B-Instruct": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "Meta-Llama-3.1-70B-Instruct": {
+      "endpoint": "github",
+      "limit": 50
+    },
+    "Mistral-large-2407": {
+      "endpoint": "github",
+      "limit": 50
+    },
+    "Phi-3.5-MoE-instruct": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "Phi-3.5-mini-instruct": {
+      "endpoint": "github",
+      "limit": 150
+    },
+    "Phi-3-medium-128k-instruct": {
+      "endpoint": "github",
+      "limit": 150
+    }
+  },
+  "advanced_models": {
+    "glm-4-plus": {
+      "endpoint": "zhipu",
+      "limit": -1
+    },
+    "o1-mini": {
+      "endpoint": "github",
+      "limit": 12
+    },
+    "o1-preview": {
+      "endpoint": "github",
+      "limit": 8
+    },
+    "gpt-4o": {
+      "endpoint": "github",
+      "limit": 50
+    },
+    "AI21-Jamba-1.5-Large": {
+      "endpoint": "github",
+      "limit": 50
+    },
+    "Cohere-command-r-plus": {
+      "endpoint": "github",
+      "limit": 50
+    },
+    "Meta-Llama-3.1-405B-Instruct": {
+      "endpoint": "github",
+      "limit": 50
+    }
+  }
+}

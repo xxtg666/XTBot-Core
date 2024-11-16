@@ -1,14 +1,14 @@
 import os
 import json
-import openai
+from openai import OpenAI
 import tiktoken
 import httpx
 import time
 import datetime
 import pandas
 
-os.environ["HTTP_PROXY"] = "http://127.0.0.1:7890"
-os.environ["HTTPS_PROXY"] = "http://127.0.0.1:7890"
+os.environ["HTTP_PROXY"] = ""
+os.environ["HTTPS_PROXY"] = ""
 
 class USER_DATA_UTILS:
     def __init__(self):
@@ -19,10 +19,11 @@ class USER_DATA_UTILS:
         self._makeDir("data/chatgpt2/user_sign")
         if not os.path.exists("data/chatgpt2/config.json"):
             json.dump({
-                "api_key":"", # 非公开内容
-                "api_base":"https://api.openai.com/v1",
-                "api_key_4":"", # 非公开内容
-                "api_base_4":"" # 非公开内容
+                "api_key":"6666666666",
+                "api_base":"https://example.com",
+                "api_key_4":"6666666666",
+                "api_base_4":"https://example.com",
+                "free": "false"
             },open("data/chatgpt2/config.json","w"))
     def _makeDir(self,dir_name: str) -> bool:
         try:
@@ -112,7 +113,7 @@ class USER_DATA_UTILS:
         return self.setUserSign(user_id, origin_user_sign)
 class WEB_API_UTILS:
     async def getImageBase64(self, html: str) -> str:
-        url = "http://127.0.0.1:6789/html/img" # 非公开内容(xxtg666/XT-api 服务器地址)
+        url = "http://example.com"
         try:
             response = httpx.post(url, data = {"html": html, "github-markdown": True, "timeout": 1000})
         except:
@@ -124,15 +125,14 @@ class WEB_API_UTILS:
             url = "https://api.github.com/markdown"
             response = await client.post(url, json = {"text": text})
             return response.text
-    # 下方api使用Cloudflare worker搭建 源码在 xtbot-editor-api-worker.js
     async def getEditorData(self, data_id: str) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://xtbot-editor-api.xxtg666.top/get/"+data_id # XTBotChatGPTv2 Web Editor api网址
+            url = "https://example.com"+data_id
             response = await client.get(url)
             return response.text
     async def uploadEditorData(self, chat_history: list) -> str:
         async with httpx.AsyncClient() as client:
-            url = "https://xtbot-editor-api.xxtg666.top/upload" # XTBotChatGPTv2 Web Editor api网址
+            url = "https://example.com"
             response = await client.post(url, json = chat_history)
             return response.text
 
@@ -144,16 +144,36 @@ class GPT_UTILS:
         self.config = json.load(open("data/chatgpt2/config.json","r"))
     def countTokens(self, text):
         return len(self.tiktoken_encoding.encode(text))
-    async def getChatGPT(self, chat_history: list, prompt: str, user_info: dict, model: str = "gpt-3.5-turbo", token_multiplier: float = 1.0) -> list:
+    def getDefaultModel(self):
+        return "glm-4-air" if time.time() >= 6666666666 else "glm-4-plus"
+    async def getChatGPT(self, chat_history: list, prompt: str, user_info: dict, model: str = "-", token_multiplier: float = 1.0) -> list:
         if user_info["banned"]:
             return [0,0,[{"role":"XTBot","content":"错误: 你已被禁止使用XTBotChatGPTv2"}]]
-        openai.api_base = self.config["api_base"]
-        openai.api_key = self.config["api_key"]
+        if model == "-":
+            model = self.getDefaultModel()
         chat_history.append({"role": "user", "content": prompt})
-        message = openai.ChatCompletion.create(
+        message = dict(OpenAI(
+            api_key=self.config["api_key"],
+            base_url=self.config["api_base"]
+        ).chat.completions.create(
             model = model,
             messages = chat_history
-        )["choices"][0]["message"]
+        ).choices[0].message)
+        # async with httpx.AsyncClient() as client:
+        #     data = {
+        #         "model": "gpt-3.5-turbo",
+        #         "messages": chat_history
+        #     }
+        #     header = {
+        #         "Authorization": f"Bearer {openai.api_key}",
+        #         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+        #         " Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.69",
+        #     }
+        #     message = (await client.post(f"{openai.api_base}/chat/completions", json=data, headers=header)).json()
+        #     try:
+        #         message = message["choices"][0]["message"]
+        #     except:
+        #         raise openai.error.APIError(message["error"]["message"])
         tokens = len(chat_history)*3
         for m in chat_history:
             tokens += self.countTokens(m["content"])
@@ -163,15 +183,32 @@ class GPT_UTILS:
             int(token_multiplier * self.countTokens(message["content"])),
             chat_history
         ]
-    async def getGPT4(self, prompt: str, user_info: dict) -> str:
+    async def getGPT4(self, prompt: str, user_info: dict, model: str) -> str:
         if user_info["banned"] or not user_info["allow_gpt4"]:
-            return "错误: 你不能使用XTBotChatGPTv2-GPT4"
-        openai.api_base = self.config["api_base_4"]
-        openai.api_key = self.config["api_key_4"]
-        return openai.ChatCompletion.create(
-            model = "gpt-4",
+            return "错误: 无权限"
+        return OpenAI(
+            api_key=self.config["api_key_4"],
+            base_url=self.config["api_base_4"]
+        ).chat.completions.create(
+            model = model,
             messages = [{"role": "user", "content": prompt}]
-        )["choices"][0]["message"]["content"]
+        ).choices[0].message.content
+        # async with httpx.AsyncClient() as client:
+        #     data = {
+        #         "model": "gpt-4",
+        #         "messages": [{"role": "user", "content": prompt}]
+        #     }
+        #     header = {
+        #         "Authorization": f"Bearer {openai.api_key}",
+        #         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+        #         " Chrome/110.0.0.0 Safari/537.36 Edg/110.0.1587.69",
+        #     }
+        #     message = (await client.post(f"{openai.api_base}/chat/completions", json=data, headers=header)).json()
+        #     try:
+        #         message = message["choices"][0]["message"]["content"]
+        #     except:
+        #         raise openai.error.APIError(message["error"]["message"])
+        # return message
 
 class DATE_UTILS:
     def getTodayDate(self) -> str:
